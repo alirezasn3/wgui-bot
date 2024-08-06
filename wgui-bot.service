@@ -1,0 +1,14 @@
+[Unit]
+Description=wgui-bot
+After=syslog.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+PIDFile=/run/wgui-bot.pid
+ExecStart=/root/wgui-bot/wgui-bot
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
