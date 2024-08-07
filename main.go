@@ -118,7 +118,7 @@ func main() {
 						}
 						continue
 					}
-					_, err = collection.UpdateOne(context.TODO(), bson.M{"publicKey": arg}, bson.M{"$set": bson.M{"telegramChatID": update.Message.From.ID}})
+					_, err = collection.UpdateOne(context.TODO(), bson.M{"publicKey": string(arg)}, bson.M{"$set": bson.M{"telegramChatID": update.Message.From.ID}})
 					if err != nil {
 						log.Println(err)
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
