@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -88,57 +89,60 @@ func init() {
 func main() {
 
 	go func() {
-		// var err error
 		u := tgbotapi.NewUpdate(0)
 		u.Timeout = 60
 		updates := bot.GetUpdatesChan(u)
 		for update := range updates {
 			if update.Message != nil {
-				// check if message is command
-				if update.Message.Command() != "" {
-					if update.Message.Command() == "start" {
-						tt := update.Message.CommandArguments()
-						// check if arg is peer's telegram token
-						if len(tt) == 44 {
-							p := Peer{}
-							err := collection.FindOne(context.Background(), bson.M{"publicKey": tt}).Decode(&p)
-							if err != nil {
-								log.Println(err)
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
-								msg.ReplyToMessageID = update.Message.MessageID
-								_, err = bot.Send(msg)
-								if err != nil {
-									log.Println(err)
-								}
-								continue
-							}
-							_, err = collection.UpdateOne(context.TODO(), bson.M{"publicKey": tt}, bson.M{"$set": bson.M{"telegramChatID": update.Message.From.ID}})
-							if err != nil {
-								log.Println(err)
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
-								msg.ReplyToMessageID = update.Message.MessageID
-								_, err = bot.Send(msg)
-								if err != nil {
-									log.Println(err)
-								}
-								continue
-							}
-							msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("اشتراک <b>%s</b> ثبت شد.\n\n<a href=\"https://t.me/%s\">مشاهده کانال</a>", p.Name, config.ChannelID))
-							msg.ReplyToMessageID = update.Message.MessageID
-							msg.ParseMode = tgbotapi.ModeHTML
-							_, err = bot.Send(msg)
-							if err != nil {
-								log.Println(err)
-							}
+				if update.Message.CommandArguments() != "" {
+					arg, err := base64.StdEncoding.DecodeString(update.Message.CommandArguments())
+					if err != nil {
+						log.Println(err)
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
+						msg.ReplyToMessageID = update.Message.MessageID
+						_, err = bot.Send(msg)
+						if err != nil {
+							log.Println(err)
 						}
+						continue
 					}
-				} else {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
+					log.Println(update.Message.CommandArguments(), arg)
+					p := Peer{}
+					err = collection.FindOne(context.Background(), bson.M{"publicKey": string(arg)}).Decode(&p)
+					if err != nil {
+						log.Println(err)
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
+						msg.ReplyToMessageID = update.Message.MessageID
+						_, err = bot.Send(msg)
+						if err != nil {
+							log.Println(err)
+						}
+						continue
+					}
+					_, err = collection.UpdateOne(context.TODO(), bson.M{"publicKey": arg}, bson.M{"$set": bson.M{"telegramChatID": update.Message.From.ID}})
+					if err != nil {
+						log.Println(err)
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
+						msg.ReplyToMessageID = update.Message.MessageID
+						_, err = bot.Send(msg)
+						if err != nil {
+							log.Println(err)
+						}
+						continue
+					}
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("اشتراک <b>%s</b> ثبت شد.\n\n<a href=\"https://t.me/%s\">مشاهده کانال</a>", p.Name, config.ChannelID))
 					msg.ReplyToMessageID = update.Message.MessageID
-					_, err := bot.Send(msg)
+					msg.ParseMode = tgbotapi.ModeHTML
+					_, err = bot.Send(msg)
 					if err != nil {
 						log.Println(err)
 					}
+				}
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
+				msg.ReplyToMessageID = update.Message.MessageID
+				_, err := bot.Send(msg)
+				if err != nil {
+					log.Println(err)
 				}
 			}
 		}
