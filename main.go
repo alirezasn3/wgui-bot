@@ -106,7 +106,6 @@ func main() {
 						}
 						continue
 					}
-					log.Println(update.Message.CommandArguments(), arg)
 					p := Peer{}
 					err = collection.FindOne(context.Background(), bson.M{"publicKey": string(arg)}).Decode(&p)
 					if err != nil {
