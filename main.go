@@ -136,12 +136,13 @@ func main() {
 					if err != nil {
 						log.Println(err)
 					}
-				}
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
-				msg.ReplyToMessageID = update.Message.MessageID
-				_, err := bot.Send(msg)
-				if err != nil {
-					log.Println(err)
+				} else {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "درخواست نامعتبر")
+					msg.ReplyToMessageID = update.Message.MessageID
+					_, err := bot.Send(msg)
+					if err != nil {
+						log.Println(err)
+					}
 				}
 			}
 		}
