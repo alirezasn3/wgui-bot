@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -43,6 +44,83 @@ type Config struct {
 var bot *tgbotapi.BotAPI
 var collection *mongo.Collection
 var config *Config
+
+// formatBytes formats the byte size in a human-readable format
+func formatBytes(totalBytes int64, space bool) string {
+	if totalBytes == 0 {
+		if space {
+			return "00.00 KB"
+		} else {
+			return "00.00KB"
+		}
+	}
+
+	var totalKilos float64 = float64(totalBytes / 1024)
+	var totalMegas float64 = totalKilos / 1000
+	var totalGigas float64 = totalMegas / 1000
+	var totalTeras float64 = totalGigas / 1000
+
+	var unit string
+	var value float64
+	switch {
+	case totalKilos < 100:
+		unit = "KB"
+		value = float64(totalKilos)
+	case totalMegas < 100:
+		unit = "MB"
+		value = float64(totalMegas)
+	case totalGigas < 100:
+		unit = "GB"
+		value = float64(totalGigas)
+	default:
+		unit = "TB"
+		value = float64(totalTeras)
+	}
+
+	if space {
+		if value == math.Trunc(value) {
+			return fmt.Sprintf("%.0f %s", value, unit)
+		} else {
+			return fmt.Sprintf("%.1f %s", value, unit)
+		}
+	} else {
+		if value == math.Trunc(value) {
+			return fmt.Sprintf("%.0f%s", value, unit)
+		} else {
+			return fmt.Sprintf("%.1f%s", value, unit)
+		}
+	}
+}
+
+// formatExpiry formats the expiry time in a human-readable format
+func formatExpiry(expiresAt int64, noPrefix bool) string {
+	if expiresAt == 0 {
+		return "unknown"
+	}
+
+	totalSeconds := math.Trunc(float64(expiresAt-time.Now().UnixMilli()) / 1000)
+	prefix := ""
+	if totalSeconds < 0 && !noPrefix {
+		prefix = "-"
+	}
+	totalSeconds = math.Abs(totalSeconds)
+
+	if totalSeconds < 60 {
+		return fmt.Sprintf("%s%.0fseconds", prefix, totalSeconds)
+	}
+
+	totalMinutes := math.Trunc(totalSeconds / 60)
+	if totalMinutes < 60 {
+		return fmt.Sprintf("%s%.0fminutes", prefix, totalMinutes)
+	}
+
+	totalHours := math.Trunc(totalMinutes / 60)
+	if totalHours < 24 {
+		return fmt.Sprintf("%s%.0fhours", prefix, totalHours)
+	}
+
+	return fmt.Sprintf("%s%.0fdays", prefix, math.Trunc(totalHours/24))
+}
 
 func init() {
 	execPath, err := os.Executable()
@@ -94,7 +172,35 @@ func main() {
 		updates := bot.GetUpdatesChan(u)
 		for update := range updates {
 			if update.Message != nil {
-				if update.Message.CommandArguments() != "" {
+				if update.Message.Command() == "list" {
+					var peers []Peer
+					cursor, err := collection.Find(context.TODO(), bson.M{"telegramChatID": update.Message.From.ID})
+					if err != nil {
+						panic(err)
+					}
+					if err = cursor.All(context.TODO(), &peers); err != nil {
+						panic(err)
+					}
+					if len(peers) == 0 {
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "هیج کاربری ثبت نشده است")
+						msg.ReplyToMessageID = update.Message.MessageID
+						_, err := bot.Send(msg)
+						if err != nil {
+							log.Println(err)
+						}
+					}
+					text := ""
+					for _, p := range peers {
+						text += fmt.Sprintf("<b>%s</b>\n\t-> %s/%s %s\n\n", p.Name, formatBytes(p.TotalRX+p.TotalTX, false), formatBytes(p.AllowedUsage, false), formatExpiry(p.ExpiresAt-time.Now().Unix(), false))
+					}
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
+					msg.ReplyToMessageID = update.Message.MessageID
+					msg.ParseMode = tgbotapi.ModeHTML
+					_, err = bot.Send(msg)
+					if err != nil {
+						log.Println(err)
+					}
+				} else if update.Message.CommandArguments() != "" {
 					arg, err := base64.StdEncoding.DecodeString(update.Message.CommandArguments())
 					if err != nil {
 						log.Println(err)
