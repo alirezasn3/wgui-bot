@@ -76,6 +76,7 @@ var b *gotgbot.Bot
 var peersCollection *mongo.Collection
 var groupsCollection *mongo.Collection
 var config *Config
+var path string
 
 // formatBytes formats the byte size in a human-readable format
 func formatBytes(totalBytes int64, space bool) string {
@@ -188,7 +189,7 @@ func init() {
 		}
 	}
 
-	path := filepath.Dir(execPath)
+	path = filepath.Dir(execPath)
 	bytes, err := os.ReadFile(filepath.Join(path, "config.json"))
 	if err != nil {
 		panic(err)
@@ -410,7 +411,7 @@ func main() {
 					if err != nil {
 						return fmt.Errorf("failed to create new peer: %w", err)
 					}
-					_, err = exec.Command("./croc-qr-generator/croc-qr-generator", newPeer.PrivateKey, newPeer.AllowedIPs, config.ServerPublicKey, config.Endpoint, newPeer.Name).CombinedOutput()
+					_, err = exec.Command(filepath.Join(path, "croc-qr-generator", "croc-qr-generator"), newPeer.PrivateKey, newPeer.AllowedIPs, config.ServerPublicKey, config.Endpoint, newPeer.Name).CombinedOutput()
 					if err != nil {
 						return fmt.Errorf("failed to create new peer: %w", err)
 					}
