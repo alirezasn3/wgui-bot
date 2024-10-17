@@ -308,7 +308,7 @@ func main() {
 				}
 				continue
 			}
-			text += fmt.Sprintf("┏ <b>%s</b>\n┣━ %s / %s\n┗━ %s\n\n", p.Name, formatBytes(p.TotalRX+p.TotalTX, true), formatBytes(p.AllowedUsage, true), formatExpiry(p.ExpiresAt-time.Now().Unix(), false))
+			text += fmt.Sprintf("┏ <b>%s</b>\n┣━ %s / %s\n┗━ %s\n\n", p.Name, formatBytes(p.TotalRX+p.TotalTX, true), formatBytes(p.AllowedUsage, true), formatExpiry(p.ExpiresAt-time.Now().UnixMilli(), false))
 		}
 		for _, groupID := range groups {
 			var g Group
@@ -340,7 +340,7 @@ func main() {
 				text += fmt.Sprintf("┣━ <i>%s</i>\n", p.Name)
 			}
 			text += "┃\n"
-			text += fmt.Sprintf("┣━━ %s / %s\n┗━━ %s", formatBytes(g.TotalRX+g.TotalTX, true), formatBytes(g.AllowedUsage, true), formatExpiry(g.ExpiresAt-time.Now().Unix(), false))
+			text += fmt.Sprintf("┣━━ %s / %s\n┗━━ %s", formatBytes(g.TotalRX+g.TotalTX, true), formatBytes(g.AllowedUsage, true), formatExpiry(g.ExpiresAt-time.Now().UnixMilli(), false))
 		}
 		_, err = ctx.EffectiveMessage.Reply(b, text, &gotgbot.SendMessageOpts{ParseMode: "HTML"})
 		if err != nil {
