@@ -1,13 +1,19 @@
 module wgui-bot
 
-go 1.21.3
+go 1.21.6
+
+toolchain go1.22.7
 
 require (
-	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/alirezasn3/go-systemd v1.1.0
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	go.mongodb.org/mongo-driver v1.16.0
 )
 
+require github.com/alirezasn3/go-permissions v1.0.0 // indirect
+
 require (
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.29
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
