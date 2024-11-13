@@ -70,6 +70,7 @@ type Config struct {
 	ServerPublicKey  string `json:"serverPublicKey"`
 	Endpoint         string `json:"endpoint"`
 	BypassKey        string `json:"bypassKey"`
+	WGUIAdress       string `json:"wguiAddress"`
 }
 
 var b *gotgbot.Bot
@@ -376,7 +377,7 @@ func main() {
 					return fmt.Errorf("invalid message: %s", ctx.BusinessMessage.Text)
 				}
 				c := http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}, Timeout: time.Second * 5}
-				req, err := http.NewRequest("POST", "https://10.0.0.1/api/peers", bytes.NewBuffer([]byte(fmt.Sprintf(
+				req, err := http.NewRequest("POST", config.WGUIAdress+"/api/peers", bytes.NewBuffer([]byte(fmt.Sprintf(
 					`{"name":"%s","allowedUsage":%d,"expiresAt":%d,"role":"user"}`, parts[0], allowedUsage*1024000000, time.Now().UnixMilli()+(expiresAt*24*3600*1000),
 				))))
 				if err != nil {
@@ -393,7 +394,7 @@ func main() {
 					if err != nil {
 						return fmt.Errorf("failed to create new peer: %w", err)
 					}
-					req2, err := http.NewRequest("GET", "https://10.0.0.1/api/peers/"+url.QueryEscape(string(by)), nil)
+					req2, err := http.NewRequest("GET", config.WGUIAdress+"/api/peers/"+url.QueryEscape(string(by)), nil)
 					if err != nil {
 						return fmt.Errorf("failed to create new peer: %w", err)
 					}
