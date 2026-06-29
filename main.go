@@ -426,6 +426,20 @@ func main() {
 					if err != nil {
 						return fmt.Errorf("failed to send photo: %w", err)
 					}
+					f2, err := os.OpenFile(newPeer.Name+".conf", os.O_CREATE|os.O_RDWR, 0644)
+					if err != nil {
+						return fmt.Errorf("failed to create config file: %w", err)
+					}
+					_, err = fmt.Fprintf(f2, "[Interface]\nPrivateKey = %s\nAddress = %s\nDNS = 1.1.1.1,8.8.8.8\n[Peer]\nPublicKey = %s\nAllowedIPs = 0.0.0.0/0\nEndpoint = %s", newPeer.PrivateKey, newPeer.AllowedIPs, config.ServerPublicKey, config.Endpoint)
+					if err != nil {
+						return fmt.Errorf("failed to write to config file: %w", err)
+					}
+					_, err = b.SendDocument(ctx.BusinessMessage.Chat.Id, gotgbot.InputFileByReader(newPeer.Name+".conf", f2), &gotgbot.SendDocumentOpts{
+						BusinessConnectionId: ctx.BusinessMessage.BusinessConnectionId,
+					})
+					if err != nil {
+						return fmt.Errorf("failed to send config file: %w", err)
+					}
 				} else if res.StatusCode == 400 {
 					_, err = b.SendMessage(ctx.BusinessMessage.Chat.Id, "duplicate name", &gotgbot.SendMessageOpts{
 						BusinessConnectionId: ctx.BusinessMessage.BusinessConnectionId,
@@ -445,7 +459,7 @@ func main() {
 	err := updater.StartPolling(b, &ext.PollingOpts{
 		DropPendingUpdates: true,
 		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
-			Timeout: 9,
+			Timeout: 5,
 			RequestOpts: &gotgbot.RequestOpts{
 				Timeout: time.Second * 10,
 			},

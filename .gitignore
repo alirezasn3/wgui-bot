@@ -2,3 +2,5 @@ config.json
 wgui-bot
 node_modules
 *.png
+*.conf
+croc-qr-generator
