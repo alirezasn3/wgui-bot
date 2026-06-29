@@ -67,6 +67,7 @@ type Config struct {
 	TelegramBotToken string `json:"telegramBotToken"`
 	ChannelID        string `json:"channelID"`
 	AdminID          string `json:"adminID"`
+	BotID            string `json:"botID"`
 	ServerPublicKey  string `json:"serverPublicKey"`
 	Endpoint         string `json:"endpoint"`
 	BypassKey        string `json:"bypassKey"`
@@ -439,6 +440,12 @@ func main() {
 					})
 					if err != nil {
 						return fmt.Errorf("failed to send config file: %w", err)
+					}
+					_, err = b.SendMessage(ctx.BusinessMessage.Chat.Id, fmt.Sprintf("https://t.me/%s?start=%s", config.BotID, base64.StdEncoding.EncodeToString([]byte(newPeer.PublicKey))), &gotgbot.SendMessageOpts{
+						BusinessConnectionId: ctx.BusinessMessage.BusinessConnectionId,
+					})
+					if err != nil {
+						return fmt.Errorf("failed to send bot setup message: %w", err)
 					}
 				} else if res.StatusCode == 400 {
 					_, err = b.SendMessage(ctx.BusinessMessage.Chat.Id, "duplicate name", &gotgbot.SendMessageOpts{

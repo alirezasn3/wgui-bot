@@ -4,3 +4,4 @@ node_modules
 *.png
 *.conf
 croc-qr-generator
+.DS_Store
